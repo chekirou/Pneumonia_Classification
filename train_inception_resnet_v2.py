@@ -21,7 +21,7 @@ columns = ['patientId', 'Target']
 label_data = label_data.filter(columns).drop_duplicates()
 
 
-train_labels, val_labels = train_test_split(label_data.values, test_size=0.15, random_state=0)
+train_labels, val_labels = train_test_split(label_data.values, test_size=0.1, random_state=0)
 print("shapes")
 print(train_labels.shape)
 print(val_labels.shape)
@@ -51,6 +51,7 @@ val_paths = [os.path.join(train_f, image[0]) for image in val_labels]
 imshow()"""
 
 transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(p=0.5),
     transforms.RandomRotation(degrees=6),
     transforms.Resize(299),
     transforms.ToTensor()])
@@ -111,12 +112,12 @@ model.AuxLogits.fc = nn.Linear(768, 2)
 model.fc = nn.Linear(2048, 2)
 
 model.to(device)
-class_weights = torch.FloatTensor([1.0/(label_data.Target == 0).sum(), 1.0/(label_data.Target == 1).sum()]).cuda()
+class_weights = torch.FloatTensor([1.0, (label_data.Target == 0).sum()/(label_data.Target == 1).sum()]).cuda()
 
 criterion = nn.CrossEntropyLoss(weight = class_weights)
 
 # Observe that all parameters are being optimized
-optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
 # Decay LR by a factor of 0.1 every 7 epochs
 exp_lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
@@ -174,14 +175,14 @@ for epoch in range(num_epochs):
     accuracies.append(100*correct/total)
     if 100*correct/total > best :
         best = 100*correct/total
-        torch.save(model, f"/tempory/rsna_checkpoints/inception_v3_balanced.pth")
+        torch.save(model, f"/tempory/rsna_checkpoints/inception_v3_horizontal_flip.pth")
     
     
 accuracies = np.array(accuracies)
 losses = np.array(losses)
-with open('accuracies/inception_v3_balanced.npy', 'wb') as f:
+with open('accuracies/inception_v3_horizontal_flip.npy', 'wb') as f:
     np.save(f, accuracies)
-with open('losses/inception_v3_balanced.npy', 'wb') as f:
+with open('losses/inception_v3_horizontal_flip.npy', 'wb') as f:
     np.save(f, losses)
 
 model.eval()
@@ -209,4 +210,4 @@ for images, labels, patientId in tqdm(val_loader):
     
     
 print(f'Val_Acc: {100*correct/total}')
-results.to_csv('predictions/inception_v3_balanced.csv')
+results.to_csv('predictions/inception_v3_horizontal_flip.csv')
