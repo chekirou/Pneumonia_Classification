@@ -32,13 +32,16 @@ test_f = '/tempory/rsna_data/stage_2_test_images'
 train_paths = [os.path.join(train_f, image[0]) for image in train_labels]
 val_paths = [os.path.join(train_f, image[0]) for image in val_labels]
 
-
+normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
 
 transform = transforms.Compose([
+    normalize,
     transforms.Resize(512),
     transforms.ToTensor()])
 
 transform_val = transforms.Compose([
+    normalize,
     transforms.Resize(512),
     transforms.ToTensor()])
 
@@ -73,6 +76,9 @@ class Dataset(data.Dataset):
 
 train_dataset = Dataset(train_paths, train_labels, transform=transform)
 val_dataset = Dataset(val_paths, val_labels, transform=transform_val)
+
+pdb.set_trace()
+
 train_loader = data.DataLoader(dataset=train_dataset, batch_size=32, shuffle=True)
 val_loader = data.DataLoader(dataset=val_dataset, batch_size=16, shuffle=False)
 

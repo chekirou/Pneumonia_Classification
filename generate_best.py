@@ -28,11 +28,12 @@ test_f = '/tempory/rsna_data/stage_2_test_images'
 
 val_paths = [os.path.join(train_f, image[0]) for image in val_labels]
 
-
+normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
 
 transform = transforms.Compose([
-    transforms.Resize(299),
-    transforms.ToTensor()])
+    transforms.Resize(512),
+    transforms.ToTensor(), normalize])
 
 class Dataset(data.Dataset):
     
@@ -64,12 +65,12 @@ class Dataset(data.Dataset):
     
 
 val_dataset = Dataset(val_paths, val_labels, transform=transform)
-val_loader = data.DataLoader(dataset=val_dataset, batch_size=16, shuffle=False)
+val_loader = data.DataLoader(dataset=val_dataset, batch_size=8, shuffle=False)
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-model = torch.load("/tempory/rsna_checkpoints/inception_v3_balanced.pth")
+model = torch.load("/tempory/rsna_checkpoints/resnet50.pth")
 model.eval()
 
 model.to(device)
@@ -102,4 +103,4 @@ for images, labels, patientId in tqdm(val_loader):
     
     
 print(f'Val_Acc: {100*correct/total}')
-results.to_csv('best_predictions/inception_v3_balanced.csv')
+results.to_csv('best_predictions/resnet50.csv')

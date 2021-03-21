@@ -32,15 +32,16 @@ test_f = '/tempory/rsna_data/stage_2_test_images'
 train_paths = [os.path.join(train_f, image[0]) for image in train_labels]
 val_paths = [os.path.join(train_f, image[0]) for image in val_labels]
 
-
+normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
 
 transform = transforms.Compose([
-    transforms.Resize(512),
-    transforms.ToTensor()])
+    transforms.Resize(300),
+    transforms.ToTensor(), normalize])
 
 transform_val = transforms.Compose([
-    transforms.Resize(512),
-    transforms.ToTensor()])
+    transforms.Resize(300),
+    transforms.ToTensor(), normalize])
 
 class Dataset(data.Dataset):
     
@@ -74,17 +75,17 @@ class Dataset(data.Dataset):
 train_dataset = Dataset(train_paths, train_labels, transform=transform)
 val_dataset = Dataset(val_paths, val_labels, transform=transform_val)
 
-pdb.set_trace()
-
-train_loader = data.DataLoader(dataset=train_dataset, batch_size=32, shuffle=True)
+train_loader = data.DataLoader(dataset=train_dataset, batch_size=16, shuffle=True)
 val_loader = data.DataLoader(dataset=val_dataset, batch_size=16, shuffle=False)
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-model = torchvision.models.alexnet(pretrained=True)
+model = torchvision.models.resnet50(pretrained=True)
 
-model.classifier[6] = nn.Linear(4096,2)
+
+
+model.fc = nn.Linear(2048, 2)
 
 model.to(device)
 class_weights = torch.FloatTensor([1.0, (label_data.Target == 0).sum()/(label_data.Target == 1).sum()]).cuda()
@@ -95,9 +96,8 @@ criterion = nn.CrossEntropyLoss(weight = class_weights)
 optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum = 0.9)
 
 # Decay LR by a factor of 0.1 every 7 epochs
-exp_lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.1)
+exp_lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 best = 0
-
 print(model)
 losses, accuracies = [], []
 num_epochs = 20
@@ -147,14 +147,14 @@ for epoch in range(num_epochs):
     accuracies.append(100*correct/total)
     if 100*correct/total > best :
         best = 100*correct/total
-        torch.save(model, f"/tempory/rsna_checkpoints/AlexNet_no_augmentation.pth")
+        torch.save(model, f"/tempory/rsna_checkpoints/resnet50.pth")
     
     
 accuracies = np.array(accuracies)
 losses = np.array(losses)
-with open('accuracies/AlexNet_no_augmentation.npy', 'wb') as f:
+with open('accuracies/resenet50.npy', 'wb') as f:
     np.save(f, accuracies)
-with open('losses/AlexNet_no_augmentation.npy', 'wb') as f:
+with open('losses/resnet50.npy', 'wb') as f:
     np.save(f, losses)
 
 model.eval()
@@ -182,4 +182,4 @@ for images, labels, patientId in tqdm(val_loader):
     
     
 print(f'Val_Acc: {100*correct/total}')
-results.to_csv('predictions/AlexNet_no_augmentation.csv')
+results.to_csv('predictions/resnet50.csv')
