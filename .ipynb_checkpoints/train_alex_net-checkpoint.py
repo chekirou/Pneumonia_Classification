@@ -35,13 +35,11 @@ val_paths = [os.path.join(train_f, image[0]) for image in val_labels]
 
 
 transform = transforms.Compose([
-    transforms.RandomHorizontalFlip(p=0.3),
-    transforms.RandomRotation(degrees=6),
-    transforms.Resize(224),
+    transforms.Resize(512),
     transforms.ToTensor()])
 
 transform_val = transforms.Compose([
-    transforms.Resize(224),
+    transforms.Resize(512),
     transforms.ToTensor()])
 
 class Dataset(data.Dataset):
@@ -91,10 +89,10 @@ class_weights = torch.FloatTensor([1.0, (label_data.Target == 0).sum()/(label_da
 criterion = nn.CrossEntropyLoss(weight = class_weights)
 
 # Observe that all parameters are being optimized
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum = 0.9)
 
 # Decay LR by a factor of 0.1 every 7 epochs
-exp_lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+exp_lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.1)
 best = 0
 
 print(model)
@@ -146,14 +144,14 @@ for epoch in range(num_epochs):
     accuracies.append(100*correct/total)
     if 100*correct/total > best :
         best = 100*correct/total
-        torch.save(model, f"/tempory/rsna_checkpoints/AlexNet.pth")
+        torch.save(model, f"/tempory/rsna_checkpoints/AlexNet_no_augmentation.pth")
     
     
 accuracies = np.array(accuracies)
 losses = np.array(losses)
-with open('accuracies/AlexNet.npy', 'wb') as f:
+with open('accuracies/AlexNet_no_augmentation.npy', 'wb') as f:
     np.save(f, accuracies)
-with open('losses/AlexNet.npy', 'wb') as f:
+with open('losses/AlexNet_no_augmentation.npy', 'wb') as f:
     np.save(f, losses)
 
 model.eval()
@@ -181,4 +179,4 @@ for images, labels, patientId in tqdm(val_loader):
     
     
 print(f'Val_Acc: {100*correct/total}')
-results.to_csv('predictions/AlexNet.csv')
+results.to_csv('predictions/AlexNet_no_augmentation.csv')
