@@ -30,7 +30,7 @@ val_paths = [os.path.join(train_f, image[0]) for image in val_labels]
 
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
-
+#, normalize
 transform = transforms.Compose([
     transforms.Resize(512),
     transforms.ToTensor(), normalize])
@@ -80,7 +80,7 @@ best = 0
 print(model)
 
 
-results = pd.DataFrame(data= label_data, columns= ['patientId', 'Target'] )
+results = pd.DataFrame(data= val_labels, columns= ['patientId', 'Target'] )
 results.set_index('patientId', inplace=True)
 results["predicted"] = 0
 
