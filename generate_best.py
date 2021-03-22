@@ -9,11 +9,13 @@ from tqdm import tqdm
 import pdb
 
 
+
 import torch
 import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils import data
+from models.ViT import ViT
 
 label_data = pd.read_csv('/tempory/rsna_data/stage_2_train_images/stage_2_train_labels.csv')
 columns = ['patientId', 'Target']
@@ -33,7 +35,7 @@ normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
 #, normalize
 transform = transforms.Compose([
     transforms.Resize(512),
-    transforms.ToTensor(), normalize])
+    transforms.ToTensor()])
 
 class Dataset(data.Dataset):
     
@@ -49,7 +51,7 @@ class Dataset(data.Dataset):
         image = image / 255.0
 
         image = (255*image).clip(0, 255).astype(np.uint8)
-        image = Image.fromarray(image).convert('RGB')
+        image = Image.fromarray(image)
 
         label = self.labels[index][1]
         patientId = self.labels[index][0]
@@ -70,7 +72,21 @@ val_loader = data.DataLoader(dataset=val_dataset, batch_size=8, shuffle=False)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-model = torch.load("/tempory/rsna_checkpoints/resnet50.pth")
+
+model = ViT(
+    image_size = 512,
+    patch_size = 64,
+    num_classes = 2,
+    dim = 1024,
+    depth = 6,
+    heads = 8,
+    channels = 1,
+    mlp_dim = 1024,
+    dropout = 0.1,
+    emb_dropout = 0.1,
+    pool="cls"
+)
+model.load_state_dict(torch.load("/tempory/rsna_checkpoints/ViT_adam.pth"))
 model.eval()
 
 model.to(device)
@@ -103,4 +119,4 @@ for images, labels, patientId in tqdm(val_loader):
     
     
 print(f'Val_Acc: {100*correct/total}')
-results.to_csv('best_predictions/resnet50.csv')
+results.to_csv('best_predictions/ViT_adam.csv')
