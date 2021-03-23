@@ -47,8 +47,8 @@ def visualize(im,logits, att_mat):
     pdb.set_trace()
     mask = cv2.resize(mask / mask.max(), (im.shape[1], im.shape[2]))[..., np.newaxis]
     result = (mask * im.numpy().transpose(1,2,0)).astype("uint8")
-    np.save("image.npy", result)
-    np.save("image_original.npy", im)
+    np.save("image_2.npy", result)
+    np.save("image_original_2.npy", im.numpy().transpose(1,2,0))
     
 
     
