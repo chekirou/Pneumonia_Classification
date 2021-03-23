@@ -47,8 +47,7 @@ def visualize(im,logits, att_mat):
     pdb.set_trace()
     mask = cv2.resize(mask / mask.max(), (im.shape[1], im.shape[2]))[..., np.newaxis]
     result = (mask * im.numpy().transpose(1,2,0)).astype("float64")
-    np.save("image_2.npy", result)
-    np.save("image_original_2.npy", im.numpy().transpose(1,2,0))
+    pdb.set_trace()
     
 
     
@@ -139,6 +138,10 @@ for images, labels, patientId in tqdm(val_loader):
     labels = labels.to(device)
     predictions = model(images)
     _, predicted = torch.max(predictions, 1)
+    print("Target")
+    print(labels)
+    print("Predicted")
+    print(predicted)
     visualize(images.detach().cpu()[0],predictions.detach().cpu(),ATTN_weights[-1])
     pdb.set_trace()
     del images
