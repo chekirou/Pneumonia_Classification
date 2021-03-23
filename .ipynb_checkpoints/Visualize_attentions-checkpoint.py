@@ -103,7 +103,7 @@ class Dataset(data.Dataset):
     
 
 val_dataset = Dataset(val_paths, val_labels, transform=transform)
-val_loader = data.DataLoader(dataset=val_dataset, batch_size=1, shuffle=False)
+val_loader = data.DataLoader(dataset=val_dataset, batch_size=1, shuffle=True)
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
