@@ -1,3 +1,5 @@
+# script to generate csv prediction file on the test set
+
 import os
 import pandas as pd
 import numpy as np
@@ -72,6 +74,8 @@ val_loader = data.DataLoader(dataset=val_dataset, batch_size=8, shuffle=False)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+# load vision transformer
+# change this step for loading other models
 
 model = ViT(
     image_size = 512,

@@ -1,3 +1,7 @@
+# train resnet 18
+# author : Hakim Chekirou
+
+
 import os
 import pandas as pd
 import numpy as np
@@ -22,9 +26,7 @@ label_data = label_data.filter(columns).drop_duplicates()
 
 
 train_labels, val_labels = train_test_split(label_data.values, test_size=0.15, random_state=0)
-print("shapes")
-print(train_labels.shape)
-print(val_labels.shape)
+
 
 train_f = '/tempory/rsna_data/stage_2_train_images'
 test_f = '/tempory/rsna_data/stage_2_test_images'
@@ -33,22 +35,7 @@ train_paths = [os.path.join(train_f, image[0]) for image in train_labels]
 val_paths = [os.path.join(train_f, image[0]) for image in val_labels]
 
 
-"""def imshow(num_to_show=9):
-    
-    plt.figure(figsize=(10,10))
-    
-    for i in range(num_to_show):
-        plt.subplot(3, 3, i+1)
-        plt.grid(False)
-        plt.xticks([])
-        plt.yticks([])
-        
-        img_dcm = dcmread(f'{train_paths[i+20]}.dcm')
-        img_np = img_dcm.pixel_array
-        plt.imshow(img_np, cmap=plt.cm.binary)
-        plt.xlabel(train_labels[i+20][1])
 
-imshow()"""
 
 transform = transforms.Compose([
     transforms.RandomHorizontalFlip(p=0.5),
@@ -94,13 +81,7 @@ val_dataset = Dataset(val_paths, val_labels, transform=transform)
 train_loader = data.DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
 val_loader = data.DataLoader(dataset=val_dataset, batch_size=64, shuffle=False)
 
-"""batch = iter(train_loader)
-images, labels = next(batch)"""
 
-"""image_grid = torchvision.utils.make_grid(images[:4])
-image_np = image_grid.numpy()
-img = np.transpose(image_np, (1, 2, 0))
-plt.imshow(img)"""
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
