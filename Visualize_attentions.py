@@ -121,7 +121,7 @@ model = ViT(
     emb_dropout = 0.1,
     pool="mean"
 )
-model.load_state_dict(torch.load("/tempory/rsna_checkpoints/ViT_best.pth"))
+model.load_state_dict(torch.load("/tempory/rsna_checkpoints/ViT_current.pth"))
 model.eval()
 
 model.to(device)
