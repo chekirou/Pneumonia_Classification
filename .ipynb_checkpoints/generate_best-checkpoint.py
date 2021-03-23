@@ -75,7 +75,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 model = ViT(
     image_size = 512,
-    patch_size = 64,
+    patch_size = 32,
     num_classes = 2,
     dim = 1024,
     depth = 6,
@@ -84,9 +84,9 @@ model = ViT(
     mlp_dim = 1024,
     dropout = 0.1,
     emb_dropout = 0.1,
-    pool="cls"
+    pool="mean"
 )
-model.load_state_dict(torch.load("/tempory/rsna_checkpoints/ViT_adam.pth"))
+model.load_state_dict(torch.load("/tempory/rsna_checkpoints/ViT_best.pth"))
 model.eval()
 
 model.to(device)
@@ -119,4 +119,4 @@ for images, labels, patientId in tqdm(val_loader):
     
     
 print(f'Val_Acc: {100*correct/total}')
-results.to_csv('best_predictions/ViT_adam.csv')
+results.to_csv('best_predictions/ViT_best.csv')

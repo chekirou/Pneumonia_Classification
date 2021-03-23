@@ -5,6 +5,8 @@ import torch.nn.functional as F
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 
+ATTN_weights = []
+
 class Residual(nn.Module):
     def __init__(self, fn):
         super().__init__()
@@ -65,6 +67,7 @@ class Attention(nn.Module):
             del mask
 
         attn = dots.softmax(dim=-1)
+        ATTN_weights[-1].append(attn)
 
         out = einsum('b h i j, b h j d -> b h i d', attn, v)
         out = rearrange(out, 'b h n d -> b n (h d)')
@@ -114,6 +117,7 @@ class ViT(nn.Module):
         )
 
     def forward(self, img, mask = None):
+        ATTN_weights.append([])
         x = self.to_patch_embedding(img)
         b, n, _ = x.shape
 

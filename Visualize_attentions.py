@@ -7,6 +7,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pdb
+import cv2
 
 
 
@@ -16,6 +17,41 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.utils import data
 from models.ViT import ViT
+from models.ViT import ATTN_weights
+
+def visualize(im,logits, att_mat):
+    
+
+    att_mat = torch.stack(att_mat).squeeze(1).detach().cpu()
+
+    # Average the attention weights across all heads.
+    att_mat = torch.mean(att_mat, dim=1)
+
+    # To account for residual connections, we add an identity matrix to the
+    # attention matrix and re-normalize the weights.
+    residual_att = torch.eye(att_mat.size(1))
+    aug_att_mat = att_mat + residual_att
+    aug_att_mat = aug_att_mat / aug_att_mat.sum(dim=-1).unsqueeze(-1)
+
+    # Recursively multiply the weight matrices
+    joint_attentions = torch.zeros(aug_att_mat.size())
+    joint_attentions[0] = aug_att_mat[0]
+
+    for n in range(1, aug_att_mat.size(0)):
+        joint_attentions[n] = torch.matmul(aug_att_mat[n], joint_attentions[n-1])
+
+    # Attention from the output token to the input space.
+    v = joint_attentions[-1]
+    grid_size = int(np.sqrt(aug_att_mat.size(-1)))
+    mask = v[0, 1:].reshape(grid_size, grid_size).detach().numpy()
+    pdb.set_trace()
+    mask = cv2.resize(mask / mask.max(), (im.shape[1], im.shape[2]))[..., np.newaxis]
+    result = (mask * im.numpy().transpose(1,2,0)).astype("uint8")
+    pdb.set_trace()
+    plt.imsave('test.png', result)
+    
+
+    
 
 label_data = pd.read_csv('/tempory/rsna_data/stage_2_train_images/stage_2_train_labels.csv')
 columns = ['patientId', 'Target']
@@ -67,7 +103,7 @@ class Dataset(data.Dataset):
     
 
 val_dataset = Dataset(val_paths, val_labels, transform=transform)
-val_loader = data.DataLoader(dataset=val_dataset, batch_size=8, shuffle=False)
+val_loader = data.DataLoader(dataset=val_dataset, batch_size=1, shuffle=False)
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -91,14 +127,9 @@ model.eval()
 
 model.to(device)
 
-best = 0
 
 print(model)
 
-
-results = pd.DataFrame(data= val_labels, columns= ['patientId', 'Target'] )
-results.set_index('patientId', inplace=True)
-results["predicted"] = 0
 
 
 correct = 0
@@ -108,10 +139,7 @@ for images, labels, patientId in tqdm(val_loader):
     labels = labels.to(device)
     predictions = model(images)
     _, predicted = torch.max(predictions, 1)
-    total += labels.size(0)
-    correct += (labels == predicted).sum().item()
-    for i in range(labels.size(0)):
-        results.at[patientId[i], "predicted"] = predicted[i].item()
+    visualize(images.detach().cpu()[0],predictions.detach().cpu(),ATTN_weights[-1])
     del images
     del labels
     del patientId
